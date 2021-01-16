@@ -1,0 +1,56 @@
+const express = require('express')
+const cors = require('cors')
+const bodyParser = require('body-parser')
+
+const { getPagination } = require('./utils')
+
+const redis = require('redis-clients')([]);
+const client = redis.client();
+
+
+
+// starting crons and setting redis
+require('./redis')
+require('./cron')
+
+
+const PORT = process.env.PORT || 8000
+const app = express()
+
+app.use(cors())
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+app.get('/', async (req,res)=> {
+  try{
+
+    client.get('jobs', (err, jobs) => {
+      if(err){
+        console.error('Redis Error: ', err)
+        return res.send({error: 'Something Went Wrong'}).status(400)
+      }
+      
+      const { page = 0, pageSize = 24, searchKey  = '' } = getPagination(req.query)
+      
+      jobs = JSON.parse(jobs)
+      totalPages = Math.ceil(jobs.length/pageSize)
+      total = jobs.length
+      jobs = jobs.slice(page * pageSize , page * pageSize + pageSize)
+      return res.send({jobs, total, totalPages}).status(200)
+
+    })
+
+  }catch(e){
+    console.error(e)
+    return res.send({error: 'Something Went Wrong'}).status(400)
+  }
+})
+
+
+app.listen(PORT, ()=> {
+  console.log('server is up on port : ', PORT)
+})
