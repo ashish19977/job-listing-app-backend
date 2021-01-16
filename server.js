@@ -4,13 +4,15 @@ const bodyParser = require('body-parser')
 
 const { getPagination } = require('./utils')
 
-const redis = require('redis-clients')([]);
-const client = redis.client();
+// defaul redis conf
+// const redis = require('redis-clients')([]);
+// const client = redis.client();
 
+const client = require('redis').createClient(process.env.REDIS_URL);
 
 
 // starting crons and setting redis
-require('./redis')
+// require('./redis') we don't need red.js anymore
 require('./cron')
 
 
