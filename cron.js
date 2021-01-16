@@ -1,6 +1,6 @@
 var cron = require('node-cron')
 const { fetchGithubJobs } =  require('./fetchJobs')
 
-cron.schedule('1/10 * * * *', async() => {
+cron.schedule('55 * * * *', async() => {
   await fetchGithubJobs()
 })
