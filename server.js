@@ -4,15 +4,12 @@ const bodyParser = require('body-parser')
 
 const { getPagination } = require('./utils')
 
-// defaul redis conf
-// const redis = require('redis-clients')([]);
-// const client = redis.client();
+// redis
+const RedisConn = require('./redis')
+RedisConn.establishConn()
+const client = RedisConn.getClient()
 
-const client = require('redis').createClient(process.env.REDIS_URL);
-
-
-// starting crons and setting redis
-// require('./redis') we don't need red.js anymore
+// cron
 require('./cron')
 
 
@@ -35,14 +32,18 @@ app.get('/', async (req,res)=> {
         console.error('Redis Error: ', err)
         return res.send({error: 'Something Went Wrong'}).status(400)
       }
+      try{
+        const { page = 0, pageSize = 24, searchKey  = '' } = getPagination(req.query)
       
-      const { page = 0, pageSize = 24, searchKey  = '' } = getPagination(req.query)
+        jobs = JSON.parse(jobs)
+        totalPages = Math.ceil(jobs.length/pageSize)
+        total = jobs.length
+        jobs = jobs.slice(page * pageSize , page * pageSize + pageSize)
+        return res.send({jobs, total, totalPages}).status(200)
       
-      jobs = JSON.parse(jobs)
-      totalPages = Math.ceil(jobs.length/pageSize)
-      total = jobs.length
-      jobs = jobs.slice(page * pageSize , page * pageSize + pageSize)
-      return res.send({jobs, total, totalPages}).status(200)
+      }catch(e){
+        return res.send({error: 'Something Went Wrong'}).status(400) 
+      }
 
     })
 

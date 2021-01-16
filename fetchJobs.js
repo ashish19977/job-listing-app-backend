@@ -1,17 +1,12 @@
 const fetch = require('node-fetch')
 const { getLink } = require('./utils')
 
-const client = require('redis').createClient(process.env.REDIS_URL);
-
-// //initialize redis-clients with default options
-// const redis = require('redis-clients')([]);
- 
-// //obtain normal redis client
-// const client = redis.client();
-
+const RedisConn = require('./redis')
 
 const  fetchGithubJobs = async () => {
   try{
+
+    const client = RedisConn.getClient()
     
     let allJobs = [], jobs = [], page = 0
 
