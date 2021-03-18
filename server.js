@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
-const { getPagination } = require('./utils')
+const { getPagination, extractLocations } = require('./utils')
 
 // redis
 const RedisConn = require('./redis')
@@ -33,15 +33,24 @@ app.get('/', async (req,res)=> {
         return res.send({error: 'Something Went Wrong'}).status(400)
       }
       try{
-        const { page = 0, pageSize = 24, searchKey  = '' } = getPagination(req.query)
+        const { page = 0, pageSize = 24, searchKey  = '', jobLocation = '' } = getPagination(req.query)
       
         jobs = JSON.parse(jobs)
+        
+        const locations = extractLocations(jobs || [])
+
+        jobs = jobs.filter(({title = '', location = ''}) => {
+          return title.toLowerCase().match(searchKey.toLowerCase()) && location.toLowerCase().match(jobLocation.toLowerCase())
+        })
+
         totalPages = Math.ceil(jobs.length/pageSize)
         total = jobs.length
         jobs = jobs.slice(page * pageSize , page * pageSize + pageSize)
-        return res.send({jobs, total, totalPages}).status(200)
+
+        return res.send({jobs, total, totalPages, locations }).status(200)
       
       }catch(e){
+        console.error(e)
         return res.send({error: 'Something Went Wrong'}).status(400) 
       }
 
